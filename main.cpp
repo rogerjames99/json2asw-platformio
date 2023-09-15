@@ -13,18 +13,20 @@ struct my_instrument_data : public instrument_data
 
 void my_instrument_data::serialize()
 {
-    std::size_t sample_count_size = sizeof sample_count;
-    std::size_t sample_note_ranges_size = sizeof *sample_note_ranges;
-    std::size_t samples_size = sizeof *samples;
     std::ofstream ostrm("irish2.dump", std::ios::binary);
-    /* This is a load of rubbish
-    ostrm.write(reinterpret_cast<char*>(sample_count_size), sizeof sample_count_size);
-    ostrm.write(reinterpret_cast<char*>(sample_note_ranges_size), sizeof sample_note_ranges);
-    ostrm.write(reinterpret_cast<char*>(samples_size), sizeof samples_size);
-    ostrm.write(reinterpret_cast<char*>(sample_count), sizeof sample_count);
-    ostrm.write(reinterpret_cast<char*>(sample_note_ranges), sizeof sample_note_ranges);
-    ostrm.write(reinterpret_cast<char*>(samples), sizeof samples);
-    */
+    ostrm.write((char*)&sample_count, sizeof(uint8_t) * sample_count);
+
+    // Dump the sample_note_ranges
+    for (int i = 0; i < sample_count; i++)
+        ostrm.write((char*)&sample_note_ranges[i], sizeof(uint8_t));
+
+    // Dump the sample metadata and raw sample data
+    for (int i = 0; i < sample_count; i++)
+    {
+        ostrm.write((char*)&samples[i], sizeof(sample_data));
+
+        ostrm.write((char*)samples[i].sample, samples[i].number_of_raw_samples * sizeof(uint16_t));
+    }
 }
 
 int main(int, char**)

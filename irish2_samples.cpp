@@ -314,6 +314,7 @@ static const PROGMEM uint32_t sample_3_irish2_gfffF90[256] = {
 static sample_data irish2_samples[4] = {
 	{
 		(int16_t*)sample_0_irish2_gfffG55, // sample
+        1408,
 		true, // LOOP
 		12, // LENGTH_BITS
 		(1 << (32 - 12)) * WAVETABLE_CENTS_SHIFT(0) * 8000.0 / WAVETABLE_NOTE_TO_FREQUENCY(55) / AUDIO_SAMPLE_RATE_EXACT + 0.5, // PER_HERTZ_PHASE_INCREMENT
@@ -340,6 +341,7 @@ static sample_data irish2_samples[4] = {
 	},
 	{
 		(int16_t*)sample_1_irish2_gfffF66, // sample
+        384,
 		true, // LOOP
 		10, // LENGTH_BITS
 		(1 << (32 - 10)) * WAVETABLE_CENTS_SHIFT(0) * 8000.0 / WAVETABLE_NOTE_TO_FREQUENCY(66) / AUDIO_SAMPLE_RATE_EXACT + 0.5, // PER_HERTZ_PHASE_INCREMENT
@@ -366,6 +368,7 @@ static sample_data irish2_samples[4] = {
 	},
 	{
 		(int16_t*)sample_2_irish2_gfffF78, // sample
+        512,
 		true, // LOOP
 		10, // LENGTH_BITS
 		(1 << (32 - 10)) * WAVETABLE_CENTS_SHIFT(0) * 8000.0 / WAVETABLE_NOTE_TO_FREQUENCY(78) / AUDIO_SAMPLE_RATE_EXACT + 0.5, // PER_HERTZ_PHASE_INCREMENT
@@ -392,6 +395,7 @@ static sample_data irish2_samples[4] = {
 	},
 	{
 		(int16_t*)sample_3_irish2_gfffF90, // sample
+        256,
 		true, // LOOP
 		9, // LENGTH_BITS
 		(1 << (32 - 9)) * WAVETABLE_CENTS_SHIFT(0) * 8000.0 / WAVETABLE_NOTE_TO_FREQUENCY(90) / AUDIO_SAMPLE_RATE_EXACT + 0.5, // PER_HERTZ_PHASE_INCREMENT

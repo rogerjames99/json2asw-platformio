@@ -34,6 +34,7 @@
 struct sample_data {
 	// SAMPLE VALUES
 	const int16_t* sample;
+        const int number_of_raw_samples;
 	const bool LOOP;
 	const int INDEX_BITS;
 	const float PER_HERTZ_PHASE_INCREMENT;
@@ -42,7 +43,7 @@ struct sample_data {
 	const uint32_t LOOP_PHASE_LENGTH;
 	const uint16_t INITIAL_ATTENUATION_SCALAR;
 	
-	// VOLUME ENVELOPE VALUES
+	// VOLUME ENVELOPE VALUEreinterpret_castS
 	const uint32_t DELAY_COUNT;
 	const uint32_t ATTACK_COUNT;
 	const uint32_t HOLD_COUNT;
