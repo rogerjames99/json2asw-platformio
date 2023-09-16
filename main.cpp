@@ -6,6 +6,13 @@
 #include "audio_defs.h"
 #include "irish2_samples.cpp"
 
+/*
+TODO
+====
+1. Worry about structure alignment and packing. If I run this program on 64bit PC
+and then decode the file on an arm m7. Will it work?
+*/
+
 struct my_instrument_data : public instrument_data
 {
     void serialize();
@@ -15,7 +22,6 @@ void my_instrument_data::serialize()
 {
     std::ofstream ostrm("irish2.dump", std::ios::binary);
     ostrm.write((char*)&sample_count, sizeof(uint8_t) * sample_count);
-
     // Dump the sample_note_ranges
     for (int i = 0; i < sample_count; i++)
         ostrm.write((char*)&sample_note_ranges[i], sizeof(uint8_t));
