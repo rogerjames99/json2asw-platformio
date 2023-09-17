@@ -20,19 +20,19 @@ struct my_instrument_data : public instrument_data
 
 void my_instrument_data::serialize()
 {
-    std::ofstream ostrm("irish2.dump", std::ios::binary);
+    std::ofstream ostrm("irish2.bin", std::ios::binary);
     ostrm.write((char*)&sample_count, sizeof(uint8_t) * sample_count);
     // Dump the sample_note_ranges
     for (int i = 0; i < sample_count; i++)
         ostrm.write((char*)&sample_note_ranges[i], sizeof(uint8_t));
 
-    // Dump the sample metadata and raw sample data
+    // Dump the sample metadata
     for (int i = 0; i < sample_count; i++)
-    {
         ostrm.write((char*)&samples[i], sizeof(sample_data));
 
+    // Dump the raw sample data
+    for (int i = 0; i < sample_count; i++)
         ostrm.write((char*)samples[i].sample, samples[i].number_of_raw_samples * sizeof(uint16_t));
-    }
 }
 
 int main(int, char**)
