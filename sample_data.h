@@ -34,7 +34,7 @@
 struct sample_data {
 	// SAMPLE VALUES
 	const int16_t* sample;
-        const int number_of_raw_samples;
+    const unsigned int number_of_raw_samples;
 	const bool LOOP;
 	const int INDEX_BITS;
 	const float PER_HERTZ_PHASE_INCREMENT;
@@ -64,10 +64,10 @@ struct sample_data {
 	const float MODULATION_PITCH_COEFFICIENT_SECOND;
 	const int32_t MODULATION_AMPLITUDE_INITIAL_GAIN;
 	const int32_t MODULATION_AMPLITUDE_SECOND_GAIN;
-};
+} __attribute__((packed));
 
 struct instrument_data {
 	uint8_t sample_count;
-	uint8_t* sample_note_ranges;
-	sample_data* samples;
+	uint8_t* sample_note_ranges __attribute__((packed));
+	sample_data* samples __attribute__((packed));
 };
