@@ -314,7 +314,7 @@ static const PROGMEM uint32_t sample_3_irish2_gfffF90[256] = {
 static sample_data irish2_samples[4] = {
 	{
 		(int16_t*)sample_0_irish2_gfffG55, // sample
-        1408,
+        1408, // number of raw sample pairs
 		true, // LOOP
 		12, // LENGTH_BITS
 		(1 << (32 - 12)) * WAVETABLE_CENTS_SHIFT(0) * 8000.0 / WAVETABLE_NOTE_TO_FREQUENCY(55) / AUDIO_SAMPLE_RATE_EXACT + 0.5, // PER_HERTZ_PHASE_INCREMENT
@@ -341,7 +341,7 @@ static sample_data irish2_samples[4] = {
 	},
 	{
 		(int16_t*)sample_1_irish2_gfffF66, // sample
-        384,
+        384, // number of raw sample pairs 
 		true, // LOOP
 		10, // LENGTH_BITS
 		(1 << (32 - 10)) * WAVETABLE_CENTS_SHIFT(0) * 8000.0 / WAVETABLE_NOTE_TO_FREQUENCY(66) / AUDIO_SAMPLE_RATE_EXACT + 0.5, // PER_HERTZ_PHASE_INCREMENT
@@ -368,7 +368,7 @@ static sample_data irish2_samples[4] = {
 	},
 	{
 		(int16_t*)sample_2_irish2_gfffF78, // sample
-        512,
+        512, // number of raw sample pairs 
 		true, // LOOP
 		10, // LENGTH_BITS
 		(1 << (32 - 10)) * WAVETABLE_CENTS_SHIFT(0) * 8000.0 / WAVETABLE_NOTE_TO_FREQUENCY(78) / AUDIO_SAMPLE_RATE_EXACT + 0.5, // PER_HERTZ_PHASE_INCREMENT
@@ -395,7 +395,7 @@ static sample_data irish2_samples[4] = {
 	},
 	{
 		(int16_t*)sample_3_irish2_gfffF90, // sample
-        256,
+        256, // number of raw sample pairs 
 		true, // LOOP
 		9, // LENGTH_BITS
 		(1 << (32 - 9)) * WAVETABLE_CENTS_SHIFT(0) * 8000.0 / WAVETABLE_NOTE_TO_FREQUENCY(90) / AUDIO_SAMPLE_RATE_EXACT + 0.5, // PER_HERTZ_PHASE_INCREMENT
@@ -416,7 +416,7 @@ static sample_data irish2_samples[4] = {
 		uint32_t(0.00 * SAMPLES_PER_MSEC / (2 * LFO_PERIOD)), // MODULATION_DELAY
 		uint32_t(8.2 * LFO_PERIOD * (UINT32_MAX / AUDIO_SAMPLE_RATE_EXACT)), // MODULATION_INCREMENT
 		(WAVETABLE_CENTS_SHIFT(0) - 1.0) * 4, // MODULATION_PITCH_COEFFICIENT_INITIAL
-		(1.0 - WAVETABLE_CENTS_SHIFT(0)) * 4, // MODULATION_PITCH_COEFFICIENT_SECOND
+		(1.0 - WAVETABLE_CENTS_SHIFT(0)) * 4, // MODULATION_PITCH_COEFFICIENT_SECONDcd
 		int32_t(UINT16_MAX * (WAVETABLE_DECIBEL_SHIFT(0) - 1.0)) * 4, // MODULATION_AMPLITUDE_INITIAL_GAIN
 		int32_t(UINT16_MAX * (1.0 - WAVETABLE_DECIBEL_SHIFT(0))) * 4, // MODULATION_AMPLITUDE_FINAL_GAIN
 	},
