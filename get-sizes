@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+rm -f sample-code.cpp
+cp $1 sample-code.cpp
+grep "uint32_t sample_" $1|cut -d\[ -f2| cut -d\] -f1 >sizes
+echo "size_t sizes_array[]={" >>sample-code.cpp
+for i in `cat sizes`
+do
+echo "$i, " >>sample-code.cpp
+done
+echo "};" >>sample-code.cpp
+sed -i 's/PROGMEM//g' sample-code.cpp
