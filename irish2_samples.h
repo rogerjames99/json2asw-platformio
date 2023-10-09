@@ -1,7 +1,7 @@
 #pragma once
-//#include <Audio.h>
+#include <Audio.h>
 /**
  * @brief Declaration irish2.
 */
 
-extern instrument_data irish2;
+extern const AudioSynthWavetable::instrument_data irish2;

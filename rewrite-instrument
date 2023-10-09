@@ -1,0 +1,19 @@
+#!/usr/bin/env bash
+cp $1_samples.cpp instrument_samples.cpp
+cp $1_samples.h instrument_samples.h
+grep "uint32_t sample_" instrument_samples.cpp|cut -d\[ -f2| cut -d\] -f1 >sizes
+echo "" >>instrument_samples.cpp
+echo "size_t sizes_array[]={" >>instrument_samples.cpp
+for i in `cat sizes`
+do
+echo "$i, " >>instrument_samples.cpp
+done
+echo "};" >>instrument_samples.cpp
+sed -i -e "/^#include/s/$1/instrument/g;
+            s/AudioSynthWavetable:://g;
+            s/const//g;
+            s/PROGMEM//g;
+            s/$1/instrument/g" instrument_samples.cpp
+sed -i -e 's/^#include <Audio.h>//g;
+            s/AudioSynthWavetable:://g' instrument_samples.h
+rm sizes

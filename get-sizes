@@ -1,8 +1,0 @@
-#!/usr/bin/env bash
-grep "uint32_t sample_" $1|cut -d\[ -f2| cut -d\] -f1 >sizes
-echo "size_t sizes_array[]={" >>$1
-for i in `cat sizes`
-do
-echo "$i, " >>$1
-done
-echo "};" >>$i
