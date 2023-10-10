@@ -3,3 +3,4 @@ common/
 .vscode/
 sample-code.cpp
 *_samples*
+instrument.bin

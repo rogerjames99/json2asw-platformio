@@ -23,14 +23,29 @@ void my_instrument_data::serialize()
     cout << "Writing sample_count " << (unsigned int)instrument.sample_count << endl;
     ostrm.write((char*)&instrument.sample_count, sizeof(uint8_t));
 
-    // Dump the sample_note_ranges
+    // Dump the raw sample sizes
+    cout << "Dumping the raw sample sizes" << endl;
+    cout << "Current file offset " << ostrm.tellp() << endl;
+    for (int i = 0; i < instrument.sample_count; i++)
+    {
+        cout << "sizes_array[" << i << "] = " <<  sizes_array[i] << endl;
+        ostrm.write((char*)&sizes_array[i], sizeof(uint16_t));
+        cout << "Current file offset " << ostrm.tellp() << endl;
+    }
+
+    // Dump the raw sample sizes
+    cout << "Dumping the sample note ranges" << endl;
+    cout << "Starting file offset " << ostrm.tellp() << endl;
     for (int i = 0; i < instrument.sample_count; i++)
     {
         cout << "sample_note_ranges[" << i << "] = " << (unsigned int)instrument.sample_note_ranges[i] << endl;
         ostrm.write((char*)&instrument.sample_note_ranges[i], sizeof(uint8_t));
+        cout << "Current file offset " << ostrm.tellp() << endl;
     }
 
     // Dump the sample metadata
+    cout << "Dumping the sample metadata" << endl;
+    cout << "Starting file offset " << ostrm.tellp() << endl;
     for (int i = 0; i < instrument.sample_count; i++)
     {
         // N.B. The sample field in the metadata is a pointer to an int16_t.
@@ -41,16 +56,17 @@ void my_instrument_data::serialize()
         instrument.samples[i].sample = reinterpret_cast<const int16_t*>(0xdeadbeef);
         ostrm.write((char*)&instrument.samples[i], sizeof(sample_data));
         instrument.samples[i].sample = temp;
+        cout << "Current file offset " << ostrm.tellp() << endl;
     }
     // Dump the raw sample data
     // As mentioned above the raw data is written as a int32_t array.
-    cout << "Starting position " << ostrm.tellp() << endl;
+    cout << "Dumping the raw sample data - starting file offset " << ostrm.tellp() << endl;
     for (int i = 0; i < instrument.sample_count; i++)
     {
         cout << "samples[" << i << "] number_of_raw_samples " <<  sizes_array[i]
             << " number of bytes " << sizes_array[i] * sizeof(uint32_t) << endl;
         ostrm.write((char*)instrument.samples[i].sample, sizes_array[i] * sizeof(uint32_t));
-        cout << "Current position " << ostrm.tellp() << endl;
+        cout << "Current file offset " << ostrm.tellp() << endl;
     }
 }
 
@@ -59,7 +75,7 @@ int main(int, char**)
     uint8_t sample_count;
     uint8_t* sample_note_ranges;
     sample_data* samples;
-/*
+
     cout << "sizeof(instrument_data)) " << sizeof(instrument_data) << endl;
     cout << "sizeof(instrument_data::sample_count) " << sizeof(instrument_data::sample_count)
         <<  " offset " << reinterpret_cast<unsigned long>(&instrument.sample_count) - reinterpret_cast<unsigned long>(&instrument)
@@ -149,7 +165,7 @@ int main(int, char**)
     cout << "sizeof(sample_data::MODULATION_AMPLITUDE_SECOND_GAIN) " << sizeof(sample_data::MODULATION_AMPLITUDE_SECOND_GAIN)
         <<  " offset " << reinterpret_cast<unsigned long>(&instrument_samples[0].MODULATION_AMPLITUDE_SECOND_GAIN) - reinterpret_cast<unsigned long>(&instrument_samples[0])
         << endl;
-*/
+
     my_instrument_data instrument = {instrument.sample_count, instrument.sample_note_ranges, instrument.samples};
     instrument.serialize();
 	return 0;
