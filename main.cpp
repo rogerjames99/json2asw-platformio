@@ -33,7 +33,7 @@ void my_instrument_data::serialize()
         cout << "Current file offset " << ostrm.tellp() << endl;
     }
 
-    // Dump the raw sample sizes
+    // Dump the sample note ranges
     cout << "Dumping the sample note ranges" << endl;
     cout << "Starting file offset " << ostrm.tellp() << endl;
     for (int i = 0; i < instrument.sample_count; i++)

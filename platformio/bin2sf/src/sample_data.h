@@ -31,9 +31,10 @@
 #define NOTE(N) (440.0 * pow(2.0, (N - 69) / 12.0))
 #define DECIBEL_SHIFT(dB) (pow(10.0, dB/20.0))
 
-struct  __attribute__ ((__packed__, aligned (4))) sample_data { // Packed and aligned for teensy 4
+struct sample_data {
 	// SAMPLE VALUES
 	const int16_t* sample;
+    const unsigned int number_of_raw_samples;
 	const bool LOOP;
 	const int INDEX_BITS;
 	const float PER_HERTZ_PHASE_INCREMENT;
@@ -63,7 +64,7 @@ struct  __attribute__ ((__packed__, aligned (4))) sample_data { // Packed and al
 	const float MODULATION_PITCH_COEFFICIENT_SECOND;
 	const int32_t MODULATION_AMPLITUDE_INITIAL_GAIN;
 	const int32_t MODULATION_AMPLITUDE_SECOND_GAIN;
-};
+} __attribute__((packed));
 
 struct instrument_data {
 	uint8_t sample_count;
