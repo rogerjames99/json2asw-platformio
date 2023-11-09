@@ -4,80 +4,229 @@
 #include <math.h>
 #include "audio_defs.h"
 #include "sample_data.h"
-#include "irish2_samples.cpp"
+
+
+// ctroger: begin automatically generated code
+// the following JSON string contains the whole project, 
+// it's included in all generated files.
+// JSON string:[{"type":"settings","data":{"main":{},"arduino":{"ExportMode":1,"useExportDialog":true,"ProjectName":"ctroger","Board":{"Platform":"","Board":"","Options":""}},"BiDirDataWebSocketBridge":{},"workspaces":{},"sidebar":{},"palette":{},"editor":{},"devTest":{},"IndexedDBfiles":{"testFileNames":"testFile.txt"},"NodeDefGenerator":{},"NodeDefManager":{},"NodeHelpManager":{},"OSC":{}}},{"type":"tab","id":"Main","label":"Main","nodes":[],"links":[],"export":true,"isMain":false,"mainNameType":"tabName","mainNameExt":".ino","isAudioMain":false,"generateCppDestructor":false,"extraClassDeclarations":"","settings":{"scaleFactor":1.5}},{"type":"tab","id":"20231109T190344_459Z_de84","label":"Class_2","nodes":[],"links":[],"export":true,"isMain":false,"mainNameType":"tabName","mainNameExt":".ino","isAudioMain":false,"generateCppDestructor":false,"extraClassDeclarations":"","settings":{"scaleFactor":0.6}},{"type":"tab","id":"20231109T182703_158Z_dc6e","label":"Class_1","nodes":[],"links":[],"export":true,"isMain":false,"mainNameType":"tabName","mainNameExt":".ino","isAudioMain":false,"generateCppDestructor":false,"extraClassDeclarations":"","settings":{"scaleFactor":0.6}},{"id":"20231109T182443_082Z_4c5a","type":"AudioSynthWaveformSine","name":"sine","comment":"","arraySize":1,"x":410,"y":570,"z":"Main","bgColor":"#E6E0F8","wires":[["20231109T190836_796Z_a905:0","20231109T190844_158Z_e40b:0"]]},{"id":"20231109T160656_937Z_5741","type":"AudioSynthWavetable","name":"wavetable","comment":"","arraySize":1,"x":410,"y":620,"z":"Main","bgColor":"#E6E0F8","wires":[["20231109T190844_158Z_e40b:1","20231109T190836_796Z_a905:1"]]},{"id":"20231109T190836_796Z_a905","type":"AudioMixer","name":"mixer","comment":"","arraySize":1,"inputs":2,"ExtraInputs":0,"RealInputs":1,"x":585,"y":575,"z":"Main","bgColor":"#E6E0F8","wires":[["20231109T160844_970Z_b479:0"]]},{"id":"20231109T190844_158Z_e40b","type":"AudioMixer","name":"mixer1","comment":"","arraySize":1,"inputs":2,"ExtraInputs":0,"RealInputs":1,"x":585,"y":610,"z":"Main","bgColor":"#E6E0F8","wires":[["20231109T160844_970Z_b479:1"]]},{"id":"20231109T160844_970Z_b479","type":"AudioOutputMQS","name":"mqs","comment":"","x":803.3333333333334,"y":595,"z":"Main","bgColor":"#E6E0F8","wires":[]}]
+
+/* This is a modified variant of the mixer code
+ * to make it possible to autogenerate mixers with any size
+ * by using the Design Tool++ by Manicksan (Jannik Svensson)
+ * 
+ * Original copyright note:
+ * Audio Library for Teensy 3.X
+ * Copyright (c) 2014, Paul Stoffregen, paul@pjrc.com
+ *
+ * Development of this audio library was funded by PJRC.COM, LLC by sales of
+ * Teensy and Audio Adaptor boards.  Please support PJRC's efforts to develop
+ * open source software by purchasing Teensy or other PJRC products.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice, development funding notice, and this permission
+ * notice shall be included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+ * THE SOFTWARE.
+ */
+
+
+#ifndef mixers_h_
+#define mixers_h_
+
+#include "Arduino.h"
+#include "AudioStream.h"
+
+#if defined(__ARM_ARCH_7EM__)
+#define MIXERS_MAX_MULT_I 65536
+#define MIXERS_MAX_MULT_F 65536.0f
+#define MIXERS_MIN_GAIN -32767.0f
+#define MIXERS_MAX_GAIN 32767.0f
+#define MIXERS_MULT_TYPE int32_t
+#elif defined(KINETISL)
+#define MIXERS_MAX_MULT_I 256
+#define MIXERS_MAX_MULT_F 256.0f
+#define MIXERS_MIN_GAIN -127.0f
+#define MIXERS_MAX_GAIN 127.0f
+#define MIXERS_MULT_TYPE int16_t
+#endif
+
+class AudioMixer2 : public AudioStream
+{
+public:
+	AudioMixer2(void) : AudioStream(2, inputQueueArray) {
+		for (int i=0; i<2; i++) multiplier[i] = MIXERS_MAX_MULT_I;
+	}
+	virtual void update(void);
+	void gain(unsigned int channel, float gain) {
+		if (channel >= 2) return;
+		if (gain > MIXERS_MAX_GAIN) gain = MIXERS_MAX_GAIN;
+		else if (gain < MIXERS_MIN_GAIN) gain = MIXERS_MIN_GAIN;
+		multiplier[channel] = gain * MIXERS_MAX_MULT_F; // TODO: proper roundoff?
+	}
+	void gain(float gain) {
+	    if (gain > MIXERS_MAX_GAIN) gain = MIXERS_MAX_GAIN;
+		else if (gain < MIXERS_MIN_GAIN) gain = MIXERS_MIN_GAIN;
+		for (int i=0; i<2; i++) multiplier[i] = gain * MIXERS_MAX_MULT_F;
+	}
+private:
+	MIXERS_MULT_TYPE multiplier[2];
+	audio_block_t *inputQueueArray[2];
+};
+
+
+#endif
+#include <Arduino.h>
+
+#include "utility/dspinst.h"
+
+#if defined(__ARM_ARCH_7EM__)
+#define MULTI_UNITYGAIN 65536
+
+static void applyGain(int16_t *data, int32_t mult)
+{
+	uint32_t *p = (uint32_t *)data;
+	const uint32_t *end = (uint32_t *)(data + AUDIO_BLOCK_SAMPLES);
+
+	do {
+		uint32_t tmp32 = *p; // read 2 samples from *data
+		int32_t val1 = signed_multiply_32x16b(mult, tmp32);
+		int32_t val2 = signed_multiply_32x16t(mult, tmp32);
+		val1 = signed_saturate_rshift(val1, 16, 0);
+		val2 = signed_saturate_rshift(val2, 16, 0);
+		*p++ = pack_16b_16b(val2, val1);
+	} while (p < end);
+}
+
+static void applyGainThenAdd(int16_t *data, const int16_t *in, int32_t mult)
+{
+	uint32_t *dst = (uint32_t *)data;
+	const uint32_t *src = (uint32_t *)in;
+	const uint32_t *end = (uint32_t *)(data + AUDIO_BLOCK_SAMPLES);
+
+	if (mult == MULTI_UNITYGAIN) {
+		do {
+			uint32_t tmp32 = *dst;
+			*dst++ = signed_add_16_and_16(tmp32, *src++);
+			tmp32 = *dst;
+			*dst++ = signed_add_16_and_16(tmp32, *src++);
+		} while (dst < end);
+	} else {
+		do {
+			uint32_t tmp32 = *src++; // read 2 samples from *data
+			int32_t val1 = signed_multiply_32x16b(mult, tmp32);
+			int32_t val2 = signed_multiply_32x16t(mult, tmp32);
+			val1 = signed_saturate_rshift(val1, 16, 0);
+			val2 = signed_saturate_rshift(val2, 16, 0);
+			tmp32 = pack_16b_16b(val2, val1);
+			uint32_t tmp32b = *dst;
+			*dst++ = signed_add_16_and_16(tmp32, tmp32b);
+		} while (dst < end);
+	}
+}
+
+#elif defined(KINETISL)
+#define MULTI_UNITYGAIN 256
+
+static void applyGain(int16_t *data, int32_t mult)
+{
+	const int16_t *end = data + AUDIO_BLOCK_SAMPLES;
+
+	do {
+		int32_t val = *data * mult;
+		*data++ = signed_saturate_rshift(val, 16, 0);
+	} while (data < end);
+}
+
+static void applyGainThenAdd(int16_t *dst, const int16_t *src, int32_t mult)
+{
+	const int16_t *end = dst + AUDIO_BLOCK_SAMPLES;
+
+	if (mult == MULTI_UNITYGAIN) {
+		do {
+			int32_t val = *dst + *src++;
+			*dst++ = signed_saturate_rshift(val, 16, 0);
+		} while (dst < end);
+	} else {
+		do {
+			int32_t val = *dst + ((*src++ * mult) >> 8); // overflow possible??
+			*dst++ = signed_saturate_rshift(val, 16, 0);
+		} while (dst < end);
+	}
+}
+
+#endif
+
+void AudioMixer2::update(void)
+{
+	audio_block_t *in, *out=NULL;
+	unsigned int channel;
+
+	for (channel=0; channel < 2; channel++) {
+		if (!out) {
+			out = receiveWritable(channel);
+			if (out) {
+				int32_t mult = multiplier[channel];
+				if (mult != MULTI_UNITYGAIN) applyGain(out->data, mult);
+			}
+		} else {
+			in = receiveReadOnly(channel);
+			if (in) {
+				applyGainThenAdd(out->data, in->data, multiplier[channel]);
+				release(in);
+			}
+		}
+	}
+	if (out) {
+		transmit(out);
+		release(out);
+	}
+}
+
+
+class Main 
+{
+public:
+    AudioSynthWaveformSine          sine;
+    AudioSynthWavetable             wavetable;
+    AudioMixer2                     mixer;
+    AudioMixer2                     mixer1;
+    AudioOutputMQS                  mqs;
+    AudioConnection                  *patchCord[6]; // total patchCordCount:6 including array typed ones.
+
+// constructor (this is called when class-object is created)
+    Main() { 
+        int pci = 0; // used only for adding new patchcords
+
+
+        patchCord[pci++] = new AudioConnection(sine, 0, mixer, 0);
+        patchCord[pci++] = new AudioConnection(sine, 0, mixer1, 0);
+        patchCord[pci++] = new AudioConnection(wavetable, 0, mixer1, 1);
+        patchCord[pci++] = new AudioConnection(wavetable, 0, mixer, 1);
+        patchCord[pci++] = new AudioConnection(mixer, 0, mqs, 0);
+        patchCord[pci++] = new AudioConnection(mixer1, 0, mqs, 1);
+        
+    }
+}; // end of class Main
+// ctroger: end automatically generated code
+
+Main audioObjects;
 
 void setup()
 {
     while (!Serial);
-    Serial.printf("sizeof(instrument_data) %d\n", sizeof(instrument_data));
-    Serial.printf("sizeof(instrument_data::sample_count) %d offset %d\n",
-        sizeof(instrument_data::sample_count),
-        reinterpret_cast<unsigned long>(&irish2.sample_count) - reinterpret_cast<unsigned long>(&irish2));
-    Serial.printf("sizeof(instrument_data::sample_note_ranges) %d offset %d\n",
-        sizeof(instrument_data::sample_note_ranges),
-        reinterpret_cast<unsigned long>(&irish2.sample_note_ranges) - reinterpret_cast<unsigned long>(&irish2));
-    Serial.printf("sizeof(instrument_data::samples) %d offset %d\n",
-        sizeof(instrument_data::samples),
-        reinterpret_cast<unsigned long>(&irish2.samples) - reinterpret_cast<unsigned long>(&irish2));
-
-
-
-    Serial.printf("sizeof(sample_data) %d\n", sizeof(sample_data));
-    Serial.printf("sizeof(sample_data::sample) %d offset %d\n",
-        sizeof(sample_data::sample),
-        reinterpret_cast<unsigned long>(&irish2_samples[0].sample) - reinterpret_cast<unsigned long>(&irish2_samples[0]));
-    Serial.printf("sizeof(sample_data::number_of_raw_samples) %d offset %d\n",
-        sizeof(sample_data::number_of_raw_samples),
-        reinterpret_cast<unsigned long>(&irish2_samples[0].number_of_raw_samples) - reinterpret_cast<unsigned long>(&irish2_samples[0]));
-    Serial.printf("sizeof(sample_data::LOOP %d offset %d\n",
-        sizeof(sample_data::LOOP),
-        reinterpret_cast<unsigned long>(&irish2_samples[0].LOOP) - reinterpret_cast<unsigned long>(&irish2_samples[0]));
-    Serial.printf("sizeof(sample_data::INDEX_BITS) %d offset %d\n",
-        sizeof(sample_data::INDEX_BITS),
-        reinterpret_cast<unsigned long>(&irish2_samples[0].INDEX_BITS) - reinterpret_cast<unsigned long>(&irish2_samples[0]));
-    Serial.printf("sizeof(sample_data::PER_HERTZ_PHASE_INCREMENT) %d offset %d\n",
-        sizeof(sample_data::PER_HERTZ_PHASE_INCREMENT),
-        reinterpret_cast<unsigned long>(&irish2_samples[0].PER_HERTZ_PHASE_INCREMENT) - reinterpret_cast<unsigned long>(&irish2_samples[0]));
-    Serial.printf("sizeof(sample_data::MAX_PHASE) %d offset %d\n",sizeof(sample_data::MAX_PHASE),
-        reinterpret_cast<unsigned long>(&irish2_samples[0].MAX_PHASE) - reinterpret_cast<unsigned long>(&irish2_samples[0]));
-    Serial.printf("sizeof(sample_data::LOOP_PHASE_END) %d offset %d\n",sizeof(sample_data::LOOP_PHASE_END),
-        reinterpret_cast<unsigned long>(&irish2_samples[0].LOOP_PHASE_END) - reinterpret_cast<unsigned long>(&irish2_samples[0]));
-    Serial.printf("sizeof(sample_data::LOOP_PHASE_LENGTH) %d offset %d\n",sizeof(sample_data::LOOP_PHASE_LENGTH),
-        reinterpret_cast<unsigned long>(&irish2_samples[0].LOOP_PHASE_LENGTH) - reinterpret_cast<unsigned long>(&irish2_samples[0]));
-    Serial.printf("sizeof(sample_data::INITIAL_ATTENUATION_SCALAR) %d offset %d\n",sizeof(sample_data::INITIAL_ATTENUATION_SCALAR),
-        reinterpret_cast<unsigned long>(&irish2_samples[0].INITIAL_ATTENUATION_SCALAR) - reinterpret_cast<unsigned long>(&irish2_samples[0]));
-    Serial.printf("sizeof(sample_data::DELAY_COUNT) %d offset %d\n",sizeof(sample_data::DELAY_COUNT),
-        reinterpret_cast<unsigned long>(&irish2_samples[0].DELAY_COUNT) - reinterpret_cast<unsigned long>(&irish2_samples[0]));
-    Serial.printf("sizeof(sample_data::ATTACK_COUNT) %d offset %d\n",sizeof(sample_data::ATTACK_COUNT),
-        reinterpret_cast<unsigned long>(&irish2_samples[0].ATTACK_COUNT) - reinterpret_cast<unsigned long>(&irish2_samples[0]));
-    Serial.printf("sizeof(sample_data::HOLD_COUNT) %d offset %d\n",sizeof(sample_data::HOLD_COUNT),
-        reinterpret_cast<unsigned long>(&irish2_samples[0].HOLD_COUNT) - reinterpret_cast<unsigned long>(&irish2_samples[0]));
-    Serial.printf("sizeof(sample_data::DECAY_COUNT) %d offset %d\n",sizeof(sample_data::DECAY_COUNT),
-        reinterpret_cast<unsigned long>(&irish2_samples[0].DECAY_COUNT) - reinterpret_cast<unsigned long>(&irish2_samples[0]));
-    Serial.printf("sizeof(sample_data::RELEASE_COUNT) %d offset %d\n",sizeof(sample_data::RELEASE_COUNT),
-        reinterpret_cast<unsigned long>(&irish2_samples[0].RELEASE_COUNT) - reinterpret_cast<unsigned long>(&irish2_samples[0]));
-    Serial.printf("sizeof(sample_data::SUSTAIN_MULT) %d offset %d\n",sizeof(sample_data::SUSTAIN_MULT),
-        reinterpret_cast<unsigned long>(&irish2_samples[0].SUSTAIN_MULT) - reinterpret_cast<unsigned long>(&irish2_samples[0]));
-    Serial.printf("sizeof(sample_data::VIBRATO_DELAY) %d offset %d\n",sizeof(sample_data::VIBRATO_DELAY),
-        reinterpret_cast<unsigned long>(&irish2_samples[0].VIBRATO_DELAY) - reinterpret_cast<unsigned long>(&irish2_samples[0]));
-    Serial.printf("sizeof(sample_data::VIBRATO_INCREMENT) %d offset %d\n",sizeof(sample_data::VIBRATO_INCREMENT),
-        reinterpret_cast<unsigned long>(&irish2_samples[0].VIBRATO_INCREMENT) - reinterpret_cast<unsigned long>(&irish2_samples[0]));
-    Serial.printf("sizeof(sample_data::VIBRATO_PITCH_COEFFICIENT_INITIAL) %d offset %d\n",sizeof(sample_data::VIBRATO_PITCH_COEFFICIENT_INITIAL),
-        reinterpret_cast<unsigned long>(&irish2_samples[0].VIBRATO_PITCH_COEFFICIENT_INITIAL) - reinterpret_cast<unsigned long>(&irish2_samples[0]));
-    Serial.printf("sizeof(sample_data::VIBRATO_PITCH_COEFFICIENT_SECOND) %d offset %d\n",sizeof(sample_data::VIBRATO_PITCH_COEFFICIENT_SECOND),
-        reinterpret_cast<unsigned long>(&irish2_samples[0].VIBRATO_PITCH_COEFFICIENT_SECOND) - reinterpret_cast<unsigned long>(&irish2_samples[0]));
-    Serial.printf("sizeof(sample_data::MODULATION_DELAY) %d offset %d\n",sizeof(sample_data::MODULATION_DELAY),
-        reinterpret_cast<unsigned long>(&irish2_samples[0].MODULATION_DELAY) - reinterpret_cast<unsigned long>(&irish2_samples[0]));
-    Serial.printf("sizeof(sample_data::MODULATION_INCREMENT) %d offset %d\n",sizeof(sample_data::MODULATION_INCREMENT),
-        reinterpret_cast<unsigned long>(&irish2_samples[0].MODULATION_INCREMENT) - reinterpret_cast<unsigned long>(&irish2_samples[0]));
-    Serial.printf("sizeof(sample_data::MODULATION_PITCH_COEFFICIENT_INITIAL) %d offset %d\n",sizeof(sample_data::MODULATION_PITCH_COEFFICIENT_INITIAL),
-        reinterpret_cast<unsigned long>(&irish2_samples[0].MODULATION_PITCH_COEFFICIENT_INITIAL) - reinterpret_cast<unsigned long>(&irish2_samples[0]));
-    Serial.printf("sizeof(sample_data::MODULATION_PITCH_COEFFICIENT_SECOND) %d offset %d\n",sizeof(sample_data::MODULATION_PITCH_COEFFICIENT_SECOND),
-        reinterpret_cast<unsigned long>(&irish2_samples[0].MODULATION_PITCH_COEFFICIENT_SECOND) - reinterpret_cast<unsigned long>(&irish2_samples[0]));
-    Serial.printf("sizeof(sample_data::MODULATION_AMPLITUDE_INITIAL_GAIN) %d offset %d\n",sizeof(sample_data::MODULATION_AMPLITUDE_INITIAL_GAIN),
-        reinterpret_cast<unsigned long>(&irish2_samples[0].MODULATION_AMPLITUDE_INITIAL_GAIN) - reinterpret_cast<unsigned long>(&irish2_samples[0]));
-    Serial.printf("sizeof(sample_data::MODULATION_AMPLITUDE_SECOND_GAIN) %d offset %d\n",sizeof(sample_data::MODULATION_AMPLITUDE_SECOND_GAIN),
-        reinterpret_cast<unsigned long>(&irish2_samples[0].MODULATION_AMPLITUDE_SECOND_GAIN) - reinterpret_cast<unsigned long>(&irish2_samples[0]));
 }
 
 void loop()
