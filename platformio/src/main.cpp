@@ -1,15 +1,18 @@
 #include <Arduino.h>
+#include <ArduinoLog.h>
+#undef CR
 #include <Audio.h>
 #include <cstdint>
 #include <math.h>
 #include "audio_defs.h"
 #include "sample_data.h"
+#include "instrument.h"
 
 
 // ctroger: begin automatically generated code
 // the following JSON string contains the whole project, 
 // it's included in all generated files.
-// JSON string:[{"type":"settings","data":{"main":{},"arduino":{"ExportMode":1,"useExportDialog":true,"ProjectName":"ctroger","Board":{"Platform":"","Board":"","Options":""}},"BiDirDataWebSocketBridge":{},"workspaces":{},"sidebar":{},"palette":{},"editor":{},"devTest":{},"IndexedDBfiles":{"testFileNames":"testFile.txt"},"NodeDefGenerator":{},"NodeDefManager":{},"NodeHelpManager":{},"OSC":{}}},{"type":"tab","id":"Main","label":"Main","nodes":[],"links":[],"export":true,"isMain":false,"mainNameType":"tabName","mainNameExt":".ino","isAudioMain":false,"generateCppDestructor":false,"extraClassDeclarations":"","settings":{"scaleFactor":1.5}},{"type":"tab","id":"20231109T190344_459Z_de84","label":"Class_2","nodes":[],"links":[],"export":true,"isMain":false,"mainNameType":"tabName","mainNameExt":".ino","isAudioMain":false,"generateCppDestructor":false,"extraClassDeclarations":"","settings":{"scaleFactor":0.6}},{"type":"tab","id":"20231109T182703_158Z_dc6e","label":"Class_1","nodes":[],"links":[],"export":true,"isMain":false,"mainNameType":"tabName","mainNameExt":".ino","isAudioMain":false,"generateCppDestructor":false,"extraClassDeclarations":"","settings":{"scaleFactor":0.6}},{"id":"20231109T182443_082Z_4c5a","type":"AudioSynthWaveformSine","name":"sine","comment":"","arraySize":1,"x":410,"y":570,"z":"Main","bgColor":"#E6E0F8","wires":[["20231109T190836_796Z_a905:0","20231109T190844_158Z_e40b:0"]]},{"id":"20231109T160656_937Z_5741","type":"AudioSynthWavetable","name":"wavetable","comment":"","arraySize":1,"x":410,"y":620,"z":"Main","bgColor":"#E6E0F8","wires":[["20231109T190844_158Z_e40b:1","20231109T190836_796Z_a905:1"]]},{"id":"20231109T190836_796Z_a905","type":"AudioMixer","name":"mixer","comment":"","arraySize":1,"inputs":2,"ExtraInputs":0,"RealInputs":1,"x":585,"y":575,"z":"Main","bgColor":"#E6E0F8","wires":[["20231109T160844_970Z_b479:0"]]},{"id":"20231109T190844_158Z_e40b","type":"AudioMixer","name":"mixer1","comment":"","arraySize":1,"inputs":2,"ExtraInputs":0,"RealInputs":1,"x":585,"y":610,"z":"Main","bgColor":"#E6E0F8","wires":[["20231109T160844_970Z_b479:1"]]},{"id":"20231109T160844_970Z_b479","type":"AudioOutputMQS","name":"mqs","comment":"","x":803.3333333333334,"y":595,"z":"Main","bgColor":"#E6E0F8","wires":[]}]
+// JSON string:[{"type":"settings","data":{"main":{},"arduino":{"ExportMode":1,"useExportDialog":true,"ProjectName":"ctroger","Board":{"Platform":"","Board":"","Options":""}},"BiDirDataWebSocketBridge":{},"workspaces":{},"sidebar":{},"palette":{},"editor":{},"devTest":{},"IndexedDBfiles":{"testFileNames":"testFile.txt"},"NodeDefGenerator":{},"NodeDefManager":{},"NodeHelpManager":{},"OSC":{}}},{"type":"tab","id":"Main","label":"Main","nodes":[],"links":[],"export":true,"isMain":false,"mainNameType":"tabName","mainNameExt":".ino","isAudioMain":false,"generateCppDestructor":false,"extraClassDeclarations":"","settings":{"scaleFactor":1.5}},{"id":"20231109T182443_082Z_4c5a","type":"AudioSynthWaveformSine","name":"sine","comment":"","arraySize":1,"x":410,"y":570,"z":"Main","bgColor":"#E6E0F8","wires":[["20231109T190836_796Z_a905:0","20231109T190844_158Z_e40b:0"]]},{"id":"20231109T160656_937Z_5741","type":"AudioSynthWavetable","name":"wavetable","comment":"","arraySize":1,"x":410,"y":620,"z":"Main","bgColor":"#E6E0F8","wires":[["20231109T190844_158Z_e40b:1","20231109T190836_796Z_a905:1"]]},{"id":"20231109T190836_796Z_a905","type":"AudioMixer","name":"mixer","comment":"","arraySize":1,"inputs":2,"ExtraInputs":0,"RealInputs":2,"x":585,"y":575,"z":"Main","bgColor":"#E6E0F8","wires":[["20231109T160844_970Z_b479:0"]]},{"id":"20231109T190844_158Z_e40b","type":"AudioMixer","name":"mixer1","comment":"","arraySize":1,"inputs":2,"ExtraInputs":0,"RealInputs":2,"x":585,"y":610,"z":"Main","bgColor":"#E6E0F8","wires":[["20231109T160844_970Z_b479:1"]]},{"id":"20231109T160844_970Z_b479","type":"AudioOutputMQS","name":"mqs","comment":"","x":803.3333333333334,"y":595,"z":"Main","bgColor":"#E6E0F8","wires":[]}]
 
 /* This is a modified variant of the mixer code
  * to make it possible to autogenerate mixers with any size
@@ -227,9 +230,55 @@ Main audioObjects;
 void setup()
 {
     while (!Serial);
+    Log.begin(LOG_LEVEL_VERBOSE, &Serial);
+    Log.verbose("Initialising audio memory\n");
+    AudioMemory(400);
+    Log.verbose("Disabling audio interrupts\n");
+    AudioNoInterrupts();
+    Log.verbose("Preparing to play a sine wave\n");
+    audioObjects.mixer.gain(0, 1.0);
+    audioObjects.mixer.gain(1, 0.0);
+    audioObjects.mixer1.gain(0, 1.0);
+    audioObjects.mixer1.gain(1, 0.0);
+    audioObjects.sine.amplitude(1.0);
+    audioObjects.sine.frequency(440.0);
+    Log.verbose("Enabling audio interrupts\n");
+    AudioInterrupts();
+    Log.verbose("Playing a sine wave for 10 seconds\n");
+    delay(10000);
+    Log.verbose("Disabling audio interrupts\n");
+    AudioNoInterrupts();
+    Log.verbose("Attempting to load the test data\n");
+    AudioSynthWavetable::instrument_data* new_instrument = CInstrument::getInstance()->load("irish2.bin");
+    if (nullptr == new_instrument)
+        Log.verbose("Failed to load test data\n");
+    else
+    {
+        audioObjects.wavetable.setInstrument(*new_instrument);
+    }
+    audioObjects.mixer.gain(0, 0.0);
+    audioObjects.mixer.gain(1, 1.0);
+    audioObjects.mixer1.gain(0, 0.0);
+    audioObjects.mixer1.gain(1, 1.0);
+    audioObjects.wavetable.amplitude(1.0);
+    Log.verbose("Enabling audio interrupts\n");
+    AudioInterrupts();
 }
 
 void loop()
 {
+    static bool first_time = true;
+    if (first_time)
+    {
+        first_time = false;
+        
+        Log.verbose("Playing a note for ten seconds\n");
+        audioObjects.wavetable.playFrequency(880.0);
+        delay(10000);
+        Log.verbose("Stopping the note\n");
+        audioObjects.wavetable.stop();
+    }
+    else
+        delay(1000);
 }
 
