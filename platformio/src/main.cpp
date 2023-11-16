@@ -198,12 +198,11 @@ void AudioMixer2::update(void)
 	}
 }
 
-
 class Main 
 {
 public:
     AudioSynthWaveformSine          sine;
-    AudioSynthWavetable             wavetable;
+    AudioSynthWavetable           wavetable;
     AudioMixer2                     mixer;
     AudioMixer2                     mixer1;
     AudioOutputMQS                  mqs;
@@ -249,7 +248,7 @@ void setup()
     Log.verbose("Disabling audio interrupts\n");
     AudioNoInterrupts();
     Log.verbose("Attempting to load the test data\n");
-    AudioSynthWavetable::instrument_data* new_instrument = CInstrument::getInstance()->load("irish2.bin");
+    AudioSynthWavetable::instrument_data* new_instrument = CInstrument::getInstance()->load("test.bin");
     if (nullptr == new_instrument)
         Log.verbose("Failed to load test data\n");
     else

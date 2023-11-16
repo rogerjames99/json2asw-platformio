@@ -51,10 +51,10 @@ void CInstrument::dumpHexBytes(uint8_t *bytes, size_t count)
 
 void CInstrument::dumpInstrumentData(AudioSynthWavetable::instrument_data *instrumentData)
 {
-        char buf[128];
-        snprintf(buf, 128, "Instrument data\n"
+        char buf[256];
+        snprintf(buf, 256, "Instrument data\n"
                             "===============\n"
-                            "Number of samples %d"
+                            "Number of samples %d\n"
                             "Sample note ranges pointer %p\n",
                             instrumentData->sample_count,
                             instrumentData->sample_note_ranges
@@ -73,10 +73,11 @@ struct AudioSynthWavetable::instrument_data* CInstrument::load(const char *name)
 
     if (!SD.exists(name))
     {
-        Log.verbose("Line %d Cannot find file\n", __LINE__);
+        Log.verbose("Line %d Cannot find file %s\n", __LINE__, name);
         return nullptr;
     }
     
+    Log.verbose("Line %d Opening file %s\n", __LINE__, name);
     File data = SD.open(name);
     if (!data)
     {
