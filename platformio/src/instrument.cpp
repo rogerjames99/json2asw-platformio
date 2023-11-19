@@ -30,9 +30,8 @@ void CInstrument::dumpHexBytes(uint8_t *bytes, size_t count)
     size_t i = 0;
     for (; i < index; i = i + 8 )
     {
-        //Log.verbose("Line %d i %d\n", __LINE__, i);
-        snprintf(row, 512, "%x %02x %02x %02x %02x %02x %02x %02x %02x\n",
-            i, bytes[i], bytes[i + 1], bytes[i + 2], bytes[i + 3],
+        snprintf(row, 128, "%lx %02x %02x %02x %02x %02x %02x %02x %02x\n",
+            (long unsigned int)(bytes + i), bytes[i], bytes[i + 1], bytes[i + 2], bytes[i + 3],
             bytes[i + 4], bytes[i + 5], bytes[i + 6], bytes[i + 7]);
         Log.verbose("Line %d row %s",__LINE__, row);
     }
@@ -40,10 +39,12 @@ void CInstrument::dumpHexBytes(uint8_t *bytes, size_t count)
     if (index != count)
     {
         char * row_ptr = row;
+
+        // Ordinary printf is safe here
+        row_ptr = row_ptr + sprintf(row_ptr, "%lx ", (long unsigned int)(bytes + i));
         for (; i < count; i++)
         {
-            //Log.verbose("Line %d i %d\n", __LINE__, i);
-            row_ptr = row_ptr + snprintf(row_ptr, 512, "%02x ", bytes[i]);
+            row_ptr = row_ptr + sprintf(row_ptr, "%02x ", bytes[i]);
         }
         Log.verbose("Line %d row %s\n", __LINE__, row);
     }
@@ -64,6 +65,7 @@ void CInstrument::dumpInstrumentData(AudioSynthWavetable::instrument_data *instr
 
 struct AudioSynthWavetable::instrument_data* CInstrument::load(const char *name)
 {
+    char tmp_buffer[128];
 
     if (!SD.begin(chipSelect))
     {
@@ -112,6 +114,8 @@ struct AudioSynthWavetable::instrument_data* CInstrument::load(const char *name)
         data.close();
         return nullptr;
     }
+    snprintf(tmp_buffer,128, "%lx",  (long unsigned int)raw_sample_sizes);
+    Log.verbose("Line %d raw_sample_sizes data %s\n", __LINE__, tmp_buffer);
 
     // 3. Read the raw sample sizes.
     if (data.read(raw_sample_sizes, raw_sample_sizes_size) != raw_sample_sizes_size)
@@ -139,6 +143,8 @@ struct AudioSynthWavetable::instrument_data* CInstrument::load(const char *name)
         data.close();
         return nullptr;
     }
+    snprintf(tmp_buffer,128, "%lx",  (long unsigned int)sample_note_ranges_array);
+    Log.verbose("Line %d sample_note_ranges_array %s\n", __LINE__, tmp_buffer);
     instrument_data.sample_note_ranges = sample_note_ranges_array;
 
     // 5. Read the sample_note_ranges.
@@ -166,6 +172,8 @@ struct AudioSynthWavetable::instrument_data* CInstrument::load(const char *name)
         data.close();
         return nullptr;
     }
+    snprintf(tmp_buffer,128, "%lx",  (long unsigned int)samples_metadata_array);
+    Log.verbose("Line %d samples_metadata_array %s\n", __LINE__, tmp_buffer);
     instrument_data.samples = samples_metadata_array;
 
     // 7. Read the sample metadata.
@@ -187,7 +195,8 @@ struct AudioSynthWavetable::instrument_data* CInstrument::load(const char *name)
     for (int i = 0; i < instrument_data.sample_count; i++)
     {
         dumpHexBytes(reinterpret_cast<uint8_t*>(samples_metadata_array + i), sizeof(AudioSynthWavetable::sample_data));
-        Log.verbose("Line %d samples_metadata_array[%d].sample before fixup %x\n", __LINE__, i, samples_metadata_array[i].sample);
+        snprintf(tmp_buffer,128, "%lx",  (long unsigned int)samples_metadata_array[i].sample);
+        Log.verbose("Line %d samples_metadata_array[%d].sample before fixup %s\n", __LINE__, i, tmp_buffer);
         Log.verbose("Line %d samples_metadata_array[%d].number_of_raw_samples %d\n", __LINE__, i, raw_sample_sizes[i]);
         // Allocate memory for the raw samples array and fix the pointer
         int16_t raw_sample_size = raw_sample_sizes[i] * sizeof(uint32_t);
@@ -201,7 +210,9 @@ struct AudioSynthWavetable::instrument_data* CInstrument::load(const char *name)
             data.close();
             return nullptr;
         }
-        Log.verbose("Line %d samples_metadata_array[%d].sample after fixup %x, \n", __LINE__, i, samples_metadata_array[i].sample);
+        snprintf(tmp_buffer,128, "%lx",  (long unsigned int)samples_metadata_array[i].sample);
+        Log.verbose("Line %d samples_metadata_array[%d].sample after fixup %s\n", __LINE__, i, tmp_buffer);
+        Log.verbose("Line %d samples_metadata_array[%d].number_of_raw_samples %d\n", __LINE__, i, raw_sample_sizes[i]);
         updateFilePosition(&data);
         Log.verbose("Line %d current file position %s\n", __LINE__, filePosition);
         // Read the raw sample data into the array
