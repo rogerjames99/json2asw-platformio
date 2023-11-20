@@ -37,7 +37,8 @@ protected:
      * @param[in] bytes Pointer to the memory to be dumped.
      * @param[in] count Number of bytes to be dumped.
     */
-    static void dumpHexBytes(uint8_t *bytes, size_t count);
+    static void dumpHexBytes(const uint8_t *bytes, size_t count);
+    static void dumpHexBytes(const uint32_t *bytes, size_t count);
 
     /** @brief update the current binary file position
      * @param[in] file a pointer to the File structure to query.

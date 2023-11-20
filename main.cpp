@@ -87,8 +87,6 @@ int main(int, char**)
         <<  " offset " << reinterpret_cast<unsigned long>(&instrument.samples) - reinterpret_cast<unsigned long>(&instrument)
         << endl;
 
-
-
     cout << "sizeof(sample_data) " << sizeof(sample_data) << endl;
     cout << "sizeof(sample_data::sample) " << sizeof(sample_data::sample)
         <<  " offset " << reinterpret_cast<unsigned long>(&instrument_samples[0].sample) - reinterpret_cast<unsigned long>(&instrument_samples[0])

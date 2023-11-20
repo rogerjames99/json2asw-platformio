@@ -243,8 +243,8 @@ void setup()
     audioObjects.sine.frequency(440.0);
     Log.verbose("Enabling audio interrupts\n");
     AudioInterrupts();
-    Log.verbose("Playing a sine wave for 10 seconds\n");
-    delay(10000);
+    Log.verbose("Playing a sine wave for 2 seconds\n");
+    delay(2000);
     Log.verbose("Disabling audio interrupts\n");
     AudioNoInterrupts();
     Log.verbose("Attempting to load the test data\n");
