@@ -50,6 +50,11 @@ protected:
     */
     void dumpInstrumentData(AudioSynthWavetable::instrument_data *instrumentData);
 
+    /** @brief Dump sample metadata to log.
+     * @param[in] instrumentData A pointer to the sample metadata to be logged.
+    */
+    void dumpSampleMetadata(AudioSynthWavetable::sample_data* metadata);
+
     /** @brief A pointer to the singleton.*/
     static CInstrument* singleton;
     /** @brief A non const version of the instrument_data struct.*/

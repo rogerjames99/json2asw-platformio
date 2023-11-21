@@ -42,7 +42,7 @@ struct  __attribute__ ((__packed__, aligned (4))) sample_data { // Packed and al
 	const uint32_t LOOP_PHASE_LENGTH;
 	const uint16_t INITIAL_ATTENUATION_SCALAR;
 	
-	// VOLUME ENVELOPE VALUEreinterpret_castS
+	// VOLUME ENVELOPE VALUES
 	const uint32_t DELAY_COUNT;
 	const uint32_t ATTACK_COUNT;
 	const uint32_t HOLD_COUNT;

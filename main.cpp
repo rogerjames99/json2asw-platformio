@@ -2,8 +2,8 @@
 #include <iostream>
 #include <cstdint>
 #include <math.h>
-#include "sample_data.h"
 #include "audio_defs.h"
+#include "sample_data.h"
 #include "instrument_samples.cpp"
 
 using namespace std;

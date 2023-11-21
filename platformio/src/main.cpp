@@ -4,8 +4,6 @@
 #include <Audio.h>
 #include <cstdint>
 #include <math.h>
-#include "audio_defs.h"
-#include "sample_data.h"
 #include "instrument.h"
 
 
