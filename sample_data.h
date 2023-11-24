@@ -31,7 +31,7 @@
 #define NOTE(N) (440.0 * pow(2.0, (N - 69) / 12.0))
 #define DECIBEL_SHIFT(dB) (pow(10.0, dB/20.0))
 
-struct  __attribute__ ((__packed__, aligned (4))) sample_data { // Packed and aligned for teensy 4
+struct  __attribute__ ((aligned (4))) sample_data { // Aligned for teensy 4
 	// SAMPLE VALUES
 	const int16_t* sample;
 	const bool LOOP;

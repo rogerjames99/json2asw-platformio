@@ -44,7 +44,7 @@ void my_instrument_data::serialize()
     }
 
     // Dump the sample metadata
-    cout << "Dumping the sample metadata" << endl;
+    cout << "Dumping the sample metadata" <<  sizeof(sample_data) << endl;
     cout << "Starting file offset " << ostrm.tellp() << endl;
     for (int i = 0; i < instrument.sample_count; i++)
     {

@@ -1,4 +1,4 @@
-/** \file loop.h
+/** \file instrument.h
 */
 #ifndef INSTRUMENT_H
 #define INSTRUMENT_H
@@ -49,11 +49,6 @@ protected:
      * @param[in] instrumentData A pointer to the instrument data to be logged.
     */
     void dumpInstrumentData(AudioSynthWavetable::instrument_data *instrumentData);
-
-    /** @brief Dump sample metadata to log.
-     * @param[in] instrumentData A pointer to the sample metadata to be logged.
-    */
-    void dumpSampleMetadata(AudioSynthWavetable::sample_data* metadata);
 
     /** @brief A pointer to the singleton.*/
     static CInstrument* singleton;

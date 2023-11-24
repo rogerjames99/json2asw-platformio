@@ -5,7 +5,12 @@
 #include <cstdint>
 #include <math.h>
 #include "instrument.h"
+#include "utils.h"
 
+
+// Include irish2 samples for comparison
+#include "../../irish2_samples.h"
+#include "../../irish2_samples.cpp"
 
 // ctroger: begin automatically generated code
 // the following JSON string contains the whole project, 
@@ -260,6 +265,8 @@ void setup()
     audioObjects.wavetable.amplitude(1.0);
     Log.verbose("Enabling audio interrupts\n");
     AudioInterrupts();
+    Log.verbose("Dumping irish2 metadata for comparison\n");
+    CUtils::dumpSampleMetadata(&irish2_samples[0]);
 }
 
 void loop()
