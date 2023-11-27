@@ -26,20 +26,22 @@
 
 #pragma once
 #include <stdint.h>
+#include <memory>
 
 #define CENTS_SHIFT(C) (pow(2.0, C/1200.0))
 #define NOTE(N) (440.0 * pow(2.0, (N - 69) / 12.0))
 #define DECIBEL_SHIFT(dB) (pow(10.0, dB/20.0))
 
-struct  __attribute__ ((aligned (4))) sample_data { // Aligned for teensy 4
+struct sample_data {
 	// SAMPLE VALUES
-	const int16_t* sample;
+	std::vector<uint32_t> sample; // Pointer to raw sample data
 	const bool LOOP;
 	const int INDEX_BITS;
 	const float PER_HERTZ_PHASE_INCREMENT;
 	const uint32_t MAX_PHASE;
 	const uint32_t LOOP_PHASE_END;
 	const uint32_t LOOP_PHASE_LENGTH;
+    
 	const uint16_t INITIAL_ATTENUATION_SCALAR;
 	
 	// VOLUME ENVELOPE VALUES
@@ -63,10 +65,47 @@ struct  __attribute__ ((aligned (4))) sample_data { // Aligned for teensy 4
 	const float MODULATION_PITCH_COEFFICIENT_SECOND;
 	const int32_t MODULATION_AMPLITUDE_INITIAL_GAIN;
 	const int32_t MODULATION_AMPLITUDE_SECOND_GAIN;
+
+    template<class Archive>
+    void serialize(Archive & archive)
+    {
+        archive(CEREAL_NVP(sample),
+                CEREAL_NVP(LOOP),
+                CEREAL_NVP(INDEX_BITS),
+                CEREAL_NVP(PER_HERTZ_PHASE_INCREMENT),
+                CEREAL_NVP(MAX_PHASE),
+                CEREAL_NVP(LOOP_PHASE_END),
+                CEREAL_NVP(LOOP_PHASE_LENGTH),
+                CEREAL_NVP(INITIAL_ATTENUATION_SCALAR),
+                CEREAL_NVP(DELAY_COUNT),
+                CEREAL_NVP(ATTACK_COUNT),
+                CEREAL_NVP(HOLD_COUNT),
+                CEREAL_NVP(DECAY_COUNT),
+                CEREAL_NVP(RELEASE_COUNT),
+                CEREAL_NVP(SUSTAIN_MULT),
+                CEREAL_NVP(VIBRATO_DELAY),
+                CEREAL_NVP(VIBRATO_INCREMENT),
+                CEREAL_NVP(VIBRATO_PITCH_COEFFICIENT_INITIAL),
+                CEREAL_NVP(VIBRATO_PITCH_COEFFICIENT_SECOND),
+                CEREAL_NVP(MODULATION_DELAY),
+                CEREAL_NVP(MODULATION_INCREMENT),
+                CEREAL_NVP(MODULATION_PITCH_COEFFICIENT_INITIAL),
+                CEREAL_NVP(MODULATION_PITCH_COEFFICIENT_SECOND),
+                CEREAL_NVP(MODULATION_AMPLITUDE_INITIAL_GAIN),
+                CEREAL_NVP(MODULATION_AMPLITUDE_SECOND_GAIN)
+                );
+    }
 };
 
 struct instrument_data {
-	uint8_t sample_count;
-	uint8_t* sample_note_ranges;
-	sample_data* samples;
+
+	uint8_t sample_count; // Number of entries in the sample metadata array
+	std::vector<uint8_t> sample_note_ranges;
+	std::vector<sample_data> samples;
+
+    template<class Archive>
+    void serialize(Archive & archive)
+    {
+        archive(CEREAL_NVP(sample_count), CEREAL_NVP(sample_note_ranges), CEREAL_NVP(samples));
+    }
 };
