@@ -3,6 +3,8 @@
 #ifndef INSTRUMENT_H
 #define INSTRUMENT_H
 #include <Audio.h>
+#include <memory>
+#include "non-const-sample-metadata.h"
 
 /**
  * @brief Declaration of CInstrument class.
@@ -10,12 +12,6 @@
 class CInstrument
 {
 public:
-    struct my_instrument_data_t
-    {
-        uint8_t sample_count;
-        uint8_t* sample_note_ranges;
-        AudioSynthWavetable::sample_data* samples;
-    };
     /** @brief Deleted copy constructor.*/
     CInstrument(CInstrument &other) = delete;
 
@@ -27,7 +23,7 @@ public:
     static CInstrument *getInstance();
 
 
-    struct AudioSynthWavetable::instrument_data* load(const char* name);
+    struct instrument_data_t* load(const char* name);
 
 protected:
     /** @brief constructor.*/
@@ -48,22 +44,20 @@ protected:
     /** @brief Dump instrument data to log.
      * @param[in] instrumentData A pointer to the instrument data to be logged.
     */
-    void dumpInstrumentData(AudioSynthWavetable::instrument_data *instrumentData);
+    void dumpInstrumentData(instrument_data_t *instrumentData);
 
     /** @brief A pointer to the singleton.*/
     static CInstrument* singleton;
     /** @brief A non const version of the instrument_data struct.*/
-    my_instrument_data_t instrument_data =
+    instrument_data_t instrument_data =
     {
         0,
         nullptr,
         nullptr
     };
-    /** @brief A pointer to the raw sample sizes array*/
-    uint16_t* raw_sample_sizes = nullptr;
     /** @brief A pointer to the sample note ranges array.*/
-    uint8_t* sample_note_ranges_array = nullptr;
+    std::unique_ptr<uint8_t[]> sample_note_ranges_array;
     /** @brief A pointer to the samples metadata array.*/
-    AudioSynthWavetable::sample_data *samples_metadata_array = nullptr;
+    std::unique_ptr<my_non_const_sample_metadata[]> samples_metadata_array;
 };
 #endif // INSTRUMENT_H

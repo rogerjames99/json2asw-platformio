@@ -5,3 +5,4 @@ common/
 sample-code.cpp
 *_samples*
 instrument.bin
+instrument.json

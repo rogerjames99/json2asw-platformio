@@ -251,12 +251,12 @@ void setup()
     Log.verbose("Disabling audio interrupts\n");
     AudioNoInterrupts();
     Log.verbose("Attempting to load the test data\n");
-    AudioSynthWavetable::instrument_data* new_instrument = CInstrument::getInstance()->load("test.bin");
+    instrument_data_t* new_instrument = CInstrument::getInstance()->load("instrument.json");
     if (nullptr == new_instrument)
         Log.verbose("Failed to load test data\n");
     else
     {
-        audioObjects.wavetable.setInstrument(*new_instrument);
+        audioObjects.wavetable.setInstrument((AudioSynthWavetable::instrument_data&)*new_instrument);
     }
     audioObjects.mixer.gain(0, 0.0);
     audioObjects.mixer.gain(1, 1.0);

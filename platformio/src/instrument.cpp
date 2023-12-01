@@ -3,6 +3,7 @@
 #include <ArduinoLog.h>
 #undef CR
 #include <SD.h>
+#include <ArduinoJson.h>
 #include "instrument.h"
 #include "utils.h"
 
@@ -83,7 +84,7 @@ void CInstrument::dumpHexBytes(const uint32_t *bytes, size_t count)
     }
 }
 
-void CInstrument::dumpInstrumentData(AudioSynthWavetable::instrument_data *instrumentData)
+void CInstrument::dumpInstrumentData(instrument_data_t *instrumentData)
 {
         char buf[256];
         snprintf(buf, 256, "Instrument data\n"
@@ -96,9 +97,18 @@ void CInstrument::dumpInstrumentData(AudioSynthWavetable::instrument_data *instr
         Log.verbose("%s", buf);
 }
 
-struct AudioSynthWavetable::instrument_data* CInstrument::load(const char *name)
+struct instrument_data_t* CInstrument::load(const char *name)
 {
-    char tmp_buffer[128];
+    size_t capacity = 50000;
+    DynamicJsonDocument doc(capacity);
+    DeserializationError retcode;
+
+    instrument_data_t* instrument_data = new instrument_data_t;
+    if (instrument_data == nullptr)
+    {
+        Log.verbose("Line %d Failed to allocate instrument_data", __LINE__);
+        return nullptr;
+    }
 
     if (!SD.begin(chipSelect))
     {
@@ -120,163 +130,25 @@ struct AudioSynthWavetable::instrument_data* CInstrument::load(const char *name)
         return nullptr;
     }
 
-    // 1. Read the number of samples (uint8_t)
-    Log.verbose("Line %d sizeof(uint8_t) %d sizeof instrument_data.sample_count %d\n", __LINE__, sizeof(uint8_t), sizeof instrument_data.sample_count);
-    if (data.read(&instrument_data.sample_count, sizeof instrument_data.sample_count) != sizeof instrument_data.sample_count)
+    if ((retcode = deserializeJson(doc, data)) != DeserializationError::Ok)
     {
-        Log.verbose("Failed to read number of samples\n", __LINE__);
-        data.close();
+        Log.verbose("Line %d deserialisation failed %s\n", __LINE__, retcode.f_str());
         return nullptr;
     }
-    Log.verbose("Line %d Number of samples %d\n", __LINE__, instrument_data.sample_count);
-    updateFilePosition(&data);
-    Log.verbose("Line %d file position before reading raw sample sizes %s\n", __LINE__, filePosition);
+    instrument_data->sample_count = doc["sample_count"];
+    JsonObject top = doc.as<JsonObject>();
+    JsonArray sample_ranges = doc["sample_note_ranges"].as<JsonArray>();
+    JsonArray samples = doc["samples"].as<JsonArray>();
 
-    // 2. Allocate memory to hold the raw sample sizes.
-    if (nullptr != raw_sample_sizes)
+    sample_note_ranges_array = std::make_unique<uint8_t[]>(instrument_data->sample_count);
+
+    for (int i = 0; i < instrument_data->sample_count; i++)
     {
-        free(raw_sample_sizes);
-        raw_sample_sizes = nullptr;
+        sample_note_ranges_array[i] = (uint8_t)sample_ranges[i];
+        Log.verbose("Line %d sample_range[%d] %d\n", __LINE__, i, sample_note_ranges_array[i]);
     }
+
+    //samples_metadata_array = std::make_unique<my_sample_metadata[]>(instrument_data->sample_count);
     
-    size_t raw_sample_sizes_size = sizeof(uint16_t) * instrument_data.sample_count;
-    Log.verbose("Line %d raw_sample_sizes %d\n", __LINE__, raw_sample_sizes_size);
-    if (nullptr == (raw_sample_sizes = (uint16_t*)malloc(raw_sample_sizes_size)))
-    {
-        Log.verbose("Line %d Failed to allocate memory for raw_sample_sizes\n", __LINE__);
-        data.close();
-        return nullptr;
-    }
-    snprintf(tmp_buffer,128, "%lx",  (long unsigned int)raw_sample_sizes);
-    Log.verbose("Line %d raw_sample_sizes data %s\n", __LINE__, tmp_buffer);
-
-    // 3. Read the raw sample sizes.
-    if (data.read(raw_sample_sizes, raw_sample_sizes_size) != raw_sample_sizes_size)
-    {
-        Log.verbose("Line %d Failed to read raw sample sizes\n", __LINE__);
-        data.close();
-        return nullptr;
-    }
-
-    updateFilePosition(&data);
-    Log.verbose("Line %d file position before reading sample note ranges %s\n", __LINE__, filePosition);
-
-    // 4. Allocate memory to hold the per sample note ranges.
-    size_t sample_note_ranges_array_size = sizeof(uint8_t) * instrument_data.sample_count;
-    Log.verbose("Line %d sample_note_ranges_array_size %d\n", __LINE__, sample_note_ranges_array_size);
-    if (nullptr != sample_note_ranges_array)
-    {
-        free(sample_note_ranges_array);
-        sample_note_ranges_array = nullptr;
-    }
-
-    if (nullptr == (sample_note_ranges_array = (uint8_t*)malloc(sample_note_ranges_array_size)))
-    {
-        Log.verbose("Line %d Failed to allocate memory for sample_note_ranges_array\n", __LINE__);
-        data.close();
-        return nullptr;
-    }
-    snprintf(tmp_buffer,128, "%lx",  (long unsigned int)sample_note_ranges_array);
-    Log.verbose("Line %d sample_note_ranges_array address %s\n", __LINE__, tmp_buffer);
-    instrument_data.sample_note_ranges = sample_note_ranges_array;
-
-    // 5. Read the sample_note_ranges.
-    if (data.read(sample_note_ranges_array, sample_note_ranges_array_size) != sample_note_ranges_array_size)
-    {
-        Log.verbose("Line %d Failed to read sample sample note ranges\n", __LINE__);
-        data.close();
-        return nullptr;
-    }
-    // 6. Allocate memory for the sample metadata.
-    size_t samples_metadata_array_size = ((sizeof(AudioSynthWavetable::sample_data)) * instrument_data.sample_count);
-    if (nullptr != samples_metadata_array)
-    {
-        free(samples_metadata_array);
-        samples_metadata_array = nullptr;
-    }
-
-    if (nullptr == (samples_metadata_array = (AudioSynthWavetable::sample_data*)malloc(samples_metadata_array_size)))
-    {
-        Log.verbose("Line %d Failed to allocate memory for samples_metadata_array\n", __LINE__);
-        free(sample_note_ranges_array);
-        data.close();
-        return nullptr;
-    }
-    snprintf(tmp_buffer,128, "%lx",  (long unsigned int)samples_metadata_array);
-    Log.verbose("Line %d samples_metadata_array address %s\n", __LINE__, tmp_buffer);
-    instrument_data.samples = samples_metadata_array;
-
-    updateFilePosition(&data);
-    Log.verbose("Line %d file position before reading sample metadata array %s\n", __LINE__, filePosition);
-
-    // 7. Read the sample metadata
-    for (int i = 0; i < instrument_data.sample_count; i++)
-    {
-        char dummy[sample_metadata_padding];
-
-        if (data.read(&samples_metadata_array[i], samples_metadata_array_size) == samples_metadata_array_size)
-        {
-            if (data.read(dummy, sample_metadata_padding) != sample_metadata_padding)
-            {
-                Log.verbose("Line %d Failed to skip metadata padding\n", __LINE__);
-                return nullptr;
-            }
-        }
-        else
-        {
-            Log.verbose("Line %d Failed to read samples metadata\n", __LINE__);
-            data.close();
-            free(sample_note_ranges_array);
-            free(samples_metadata_array);
-            return nullptr;
-        }    
-    }
-
-    // 8. For each sample metadata allocate memory for the raw sample data, fix the
-    // pointer to the raw sample data in the metadata and
-    // read the raw sample data into it.
-    for (int i = 0; i < instrument_data.sample_count; i++)
-    {
-        CUtils::dumpSampleMetadata(&samples_metadata_array[i]);
-        dumpHexBytes(reinterpret_cast<uint8_t*>(samples_metadata_array + i), sizeof(AudioSynthWavetable::sample_data));
-        snprintf(tmp_buffer,128, "%lx",  (long unsigned int)samples_metadata_array[i].sample);
-        Log.verbose("Line %d samples_metadata_array[%d].sample before fixup %s\n", __LINE__, i, tmp_buffer);
-        Log.verbose("Line %d samples_metadata_array[%d].number_of_raw_samples %d\n", __LINE__, i, raw_sample_sizes[i]);
-        // Allocate memory for the raw samples array and fix the pointer
-        int16_t raw_sample_size = raw_sample_sizes[i];
-        int16_t raw_sample_size_in_bytes = raw_sample_size * sizeof(uint32_t);
-        if (nullptr == (samples_metadata_array[i].sample = (int16_t*)malloc(raw_sample_size_in_bytes)))
-        {
-            Log.verbose("Line %d Failed to allocate memory for raw samples array\n", __LINE__);
-            free(sample_note_ranges_array);
-            free(samples_metadata_array);
-            for (int j = i -1; j >= 0; j--)
-                free(const_cast<int16_t*>(samples_metadata_array[j].sample));
-            data.close();
-            return nullptr;
-        }
-        updateFilePosition(&data);
-        Log.verbose("Line %d file position before reading raw sample data %s\n", __LINE__, filePosition);
-        Log.verbose("Line %d sample %d metadata\n", __LINE__, i);
-        snprintf(tmp_buffer,128, "%lx",  (long unsigned int)samples_metadata_array[i].sample);
-        Log.verbose("Line %d samples_metadata_array[%d].sample after fixup %s\n", __LINE__, i, tmp_buffer);
-        Log.verbose("Line %d samples_metadata_array[%d].number_of_raw_samples %d\n", __LINE__, i, raw_sample_sizes[i]);
-        // Read the raw sample data into the array
-        if (data.read((void*)samples_metadata_array[i].sample, raw_sample_size_in_bytes) != (unsigned int)raw_sample_size_in_bytes)
-        {
-            Log.verbose("Line %d Failed to read raw sample data\n", __LINE__);
-            data.close();
-            
-            free(sample_note_ranges_array);
-            free(samples_metadata_array);
-            return nullptr;
-        }
-        Log.verbose("Line %d sample %d data\n", __LINE__, i);
-        dumpHexBytes((uint32_t*)samples_metadata_array[i].sample, raw_sample_size);
-    }
-    data.close();
-
-    dumpInstrumentData(reinterpret_cast<AudioSynthWavetable::instrument_data*>(&instrument_data));
-    
-    return reinterpret_cast<AudioSynthWavetable::instrument_data*>(&instrument_data);   
+    return nullptr;   
 }
