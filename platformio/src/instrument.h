@@ -55,6 +55,10 @@ protected:
         nullptr,
         nullptr
     };
+    /** @brief A pointer to the  raw sample data array.*/
+    std::unique_ptr<uint32_t[]> raw_sample_data_array;
+    /** @brief A pointer to the  raw sample data array.*/
+    std::unique_ptr<size_t[]> raw_sample_data_sizes_array;
     /** @brief A pointer to the sample note ranges array.*/
     std::unique_ptr<uint8_t[]> sample_note_ranges_array;
     /** @brief A pointer to the samples metadata array.*/

@@ -3,6 +3,7 @@
 #include <ArduinoLog.h>
 #undef CR
 #include <SD.h>
+#include <vector>
 #include <ArduinoJson.h>
 #include "instrument.h"
 #include "utils.h"
@@ -100,6 +101,7 @@ void CInstrument::dumpInstrumentData(instrument_data_t *instrumentData)
 struct instrument_data_t* CInstrument::load(const char *name)
 {
     size_t capacity = 50000;
+
     DynamicJsonDocument doc(capacity);
     DeserializationError retcode;
 
@@ -136,10 +138,28 @@ struct instrument_data_t* CInstrument::load(const char *name)
         return nullptr;
     }
     instrument_data->sample_count = doc["sample_count"];
-    JsonObject top = doc.as<JsonObject>();
+    //JsonObject top = doc.as<JsonObject>();
     JsonArray sample_ranges = doc["sample_note_ranges"].as<JsonArray>();
     JsonArray samples = doc["samples"].as<JsonArray>();
 
+    // Create raw sample data
+    std::vector<uint32_t> raw_samples_array;
+    std::vector<size_t> sample_offsets_array;
+    for (int i = 0; i < instrument_data->sample_count; i++)
+    {
+        size_t current_sample_offset = raw_samples_array.size();
+        sample_offsets_array.push_back(current_sample_offset);
+        Log.verbose("Line %d current sample size %d\n", __LINE__, current_sample_offset);
+        JsonArray raw_samples = samples[i]["sample"].as<JsonArray>();
+        for(JsonVariant v : raw_samples)
+            raw_samples_array.push_back(v.as<uint32_t>());
+    }
+    size_t total_sample_size = raw_samples_array.size();
+    Log.verbose("Line %d raw_samples_array size %d\n", __LINE__, total_sample_size);
+    raw_sample_data_array =  std::make_unique<uint32_t[]>(total_sample_size);
+    raw_sample_data_sizes_array = std::make_unique<size_t[]>(instrument_data->sample_count);
+
+    // Create sample note ranges array
     sample_note_ranges_array = std::make_unique<uint8_t[]>(instrument_data->sample_count);
 
     for (int i = 0; i < instrument_data->sample_count; i++)
@@ -148,7 +168,8 @@ struct instrument_data_t* CInstrument::load(const char *name)
         Log.verbose("Line %d sample_range[%d] %d\n", __LINE__, i, sample_note_ranges_array[i]);
     }
 
-    //samples_metadata_array = std::make_unique<my_sample_metadata[]>(instrument_data->sample_count);
+    // Create sample metadata array
+    samples_metadata_array = std::make_unique<my_non_const_sample_metadata[]>(instrument_data->sample_count);
     
     return nullptr;   
 }
