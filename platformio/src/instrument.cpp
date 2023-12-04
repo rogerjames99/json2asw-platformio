@@ -8,9 +8,6 @@
 #include "instrument.h"
 #include "utils.h"
 
-// Hack for padding
-size_t sample_metadata_padding = 4;
-
 static const int chipSelect = BUILTIN_SDCARD;
 
 char filePosition[10];
@@ -91,26 +88,22 @@ void CInstrument::dumpInstrumentData(instrument_data_t *instrumentData)
         snprintf(buf, 256, "Instrument data\n"
                             "===============\n"
                             "Number of samples %d\n"
-                            "Sample note ranges pointer %p\n",
+                            "Sample note ranges pointer %p\n"
+                            "Sample metadata pointer %p\n",
                             instrumentData->sample_count,
-                            instrumentData->sample_note_ranges
+                            instrumentData->sample_note_ranges,
+                            instrumentData->samples
                             );
         Log.verbose("%s", buf);
 }
 
 struct instrument_data_t* CInstrument::load(const char *name)
 {
+    char buf[256];
     size_t capacity = 50000;
 
     DynamicJsonDocument doc(capacity);
     DeserializationError retcode;
-
-    instrument_data_t* instrument_data = new instrument_data_t;
-    if (instrument_data == nullptr)
-    {
-        Log.verbose("Line %d Failed to allocate instrument_data", __LINE__);
-        return nullptr;
-    }
 
     if (!SD.begin(chipSelect))
     {
@@ -137,8 +130,10 @@ struct instrument_data_t* CInstrument::load(const char *name)
         Log.verbose("Line %d deserialisation failed %s\n", __LINE__, retcode.f_str());
         return nullptr;
     }
+
+    instrument_data = std::make_unique<instrument_data_t>();
+
     instrument_data->sample_count = doc["sample_count"];
-    //JsonObject top = doc.as<JsonObject>();
     JsonArray sample_ranges = doc["sample_note_ranges"].as<JsonArray>();
     JsonArray samples = doc["samples"].as<JsonArray>();
 
@@ -157,7 +152,8 @@ struct instrument_data_t* CInstrument::load(const char *name)
     size_t total_sample_size = raw_samples_array.size();
     Log.verbose("Line %d raw_samples_array size %d\n", __LINE__, total_sample_size);
     raw_sample_data_array =  std::make_unique<uint32_t[]>(total_sample_size);
-    raw_sample_data_sizes_array = std::make_unique<size_t[]>(instrument_data->sample_count);
+    for (size_t i = 0; i < total_sample_size; i++)
+        raw_sample_data_array[i] = raw_samples_array[i];
 
     // Create sample note ranges array
     sample_note_ranges_array = std::make_unique<uint8_t[]>(instrument_data->sample_count);
@@ -169,7 +165,46 @@ struct instrument_data_t* CInstrument::load(const char *name)
     }
 
     // Create sample metadata array
-    samples_metadata_array = std::make_unique<my_non_const_sample_metadata[]>(instrument_data->sample_count);
+    samples_metadata_array = std::make_unique<my_non_const_sample_metadata[]>(instrument_data->sample_count); 
+
+    for (int i = 0; i < instrument_data->sample_count; i++)
+    {
+        samples_metadata_array[i].sample = (uint16_t*)&raw_sample_data_array[sample_offsets_array[i]];
+        snprintf(buf, 256, "sample %p\n", samples_metadata_array[i].sample);
+        Log.verbose("%s", buf);
+
+        samples_metadata_array[i].LOOP = samples[i]["LOOP"];
+        samples_metadata_array[i].INDEX_BITS = samples[i]["INDEX_BITS"];
+        samples_metadata_array[i].PER_HERTZ_PHASE_INCREMENT = samples[i]["PER_HERTZ_PHASE_INCREMENT"];
+        samples_metadata_array[i].MAX_PHASE = samples[i]["MAX_PHASE"];
+        samples_metadata_array[i].LOOP_PHASE_END = samples[i]["LOOP_PHASE_END"];
+        samples_metadata_array[i].LOOP_PHASE_LENGTH = samples[i]["LOOP_PHASE_LENGTH"];
+        samples_metadata_array[i].INITIAL_ATTENUATION_SCALAR = samples[i]["INITIAL_ATTENUATION_SCALAR"];
+        samples_metadata_array[i].DELAY_COUNT = samples[i]["DELAY_COUNT"];
+        samples_metadata_array[i].ATTACK_COUNT = samples[i]["ATTACK_COUNT"];
+        samples_metadata_array[i].HOLD_COUNT = samples[i]["HOLD_COUNT"];
+        samples_metadata_array[i].DECAY_COUNT = samples[i]["DECAY_COUNT"];
+        samples_metadata_array[i].RELEASE_COUNT = samples[i]["RELEASE_COUNT"];
+        samples_metadata_array[i].SUSTAIN_MULT = samples[i]["SUSTAIN_MULT"];
+        samples_metadata_array[i].VIBRATO_DELAY = samples[i]["VIBRATO_DELAY"];
+        samples_metadata_array[i].VIBRATO_INCREMENT = samples[i]["VIBRATO_INCREMENT"];
+        samples_metadata_array[i].VIBRATO_PITCH_COEFFICIENT_INITIAL = samples[i]["VIBRATO_PITCH_COEFFICIENT_INITIAL"];
+        samples_metadata_array[i].VIBRATO_PITCH_COEFFICIENT_SECOND = samples[i]["VIBRATO_PITCH_COEFFICIENT_SECOND"];
+        samples_metadata_array[i].MODULATION_PITCH_COEFFICIENT_INITIAL = samples[i]["MODULATION_PITCH_COEFFICIENT_INITIAL"];
+        samples_metadata_array[i].MODULATION_PITCH_COEFFICIENT_SECOND = samples[i]["MODULATION_PITCH_COEFFICIENT_SECOND"];
+        samples_metadata_array[i].MODULATION_AMPLITUDE_INITIAL_GAIN = samples[i]["MODULATION_AMPLITUDE_INITIAL_GAIN"];
+        samples_metadata_array[i].MODULATION_AMPLITUDE_SECOND_GAIN = samples[i]["MODULATION_AMPLITUDE_SECOND_GAIN"];
+    }
+
+    snprintf(buf, 256, "samples_metadata_array %p\n",
+        (void*)samples_metadata_array.get());
+    Log.verbose("%s", buf);
+    CUtils::dumpSampleMetadata((const struct AudioSynthWavetable::sample_data*)samples_metadata_array.get());
+
+    instrument_data->sample_note_ranges = sample_note_ranges_array.get();
+    instrument_data->samples = samples_metadata_array.get();
+
+    dumpInstrumentData(instrument_data.get());
     
-    return nullptr;   
+    return instrument_data.get();   
 }
