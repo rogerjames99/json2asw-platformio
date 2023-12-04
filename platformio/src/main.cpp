@@ -277,7 +277,7 @@ void loop()
         first_time = false;
         
         Log.verbose("Playing a note for ten seconds\n");
-        audioObjects.wavetable.playFrequency(880.0);
+        audioObjects.wavetable.playFrequency(440.0);
         delay(10000);
         Log.verbose("Stopping the note\n");
         audioObjects.wavetable.stop();

@@ -48,17 +48,10 @@ protected:
 
     /** @brief A pointer to the singleton.*/
     static CInstrument* singleton;
-    /** @brief A non const version of the instrument_data struct.*/
-    instrument_data_t instrument_data =
-    {
-        0,
-        nullptr,
-        nullptr
-    };
+    /** @brief A pointer the instrument data.*/
+    std::unique_ptr<instrument_data_t> instrument_data;
     /** @brief A pointer to the  raw sample data array.*/
     std::unique_ptr<uint32_t[]> raw_sample_data_array;
-    /** @brief A pointer to the  raw sample data array.*/
-    std::unique_ptr<size_t[]> raw_sample_data_sizes_array;
     /** @brief A pointer to the sample note ranges array.*/
     std::unique_ptr<uint8_t[]> sample_note_ranges_array;
     /** @brief A pointer to the samples metadata array.*/
