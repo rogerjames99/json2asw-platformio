@@ -23,7 +23,7 @@ public:
     static CInstrument *getInstance();
 
 
-    struct instrument_data_t* load(const char* name);
+    AudioSynthWavetable::instrument_data* load(const char* name);
 
 protected:
     /** @brief constructor.*/

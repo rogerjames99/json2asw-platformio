@@ -1,12 +1,14 @@
 #include <Arduino.h>
 #include <ArduinoLog.h>
 #undef CR
+#include <map>
 #include <Audio.h>
 #include <cstdint>
 #include <math.h>
 #include "instrument.h"
 #include "utils.h"
-
+#include "pugwash.h"
+#include "mylog.h"
 
 // Include irish2 samples for comparison
 #include "../../irish2_samples.h"
@@ -231,41 +233,45 @@ Main audioObjects;
 
 void setup()
 {
+#ifndef LOGVERBOSE
     while (!Serial);
+#endif
     Log.begin(LOG_LEVEL_VERBOSE, &Serial);
-    Log.verbose("Initialising audio memory\n");
+    LOGVERBOSE("Initialising audio memory\n");
     AudioMemory(400);
-    Log.verbose("Disabling audio interrupts\n");
+    LOGVERBOSE("Disabling audio interrupts\n");
     AudioNoInterrupts();
-    Log.verbose("Preparing to play a sine wave\n");
+    LOGVERBOSE("Preparing to play a sine wave\n");
     audioObjects.mixer.gain(0, 1.0);
     audioObjects.mixer.gain(1, 0.0);
     audioObjects.mixer1.gain(0, 1.0);
     audioObjects.mixer1.gain(1, 0.0);
     audioObjects.sine.amplitude(1.0);
     audioObjects.sine.frequency(440.0);
-    Log.verbose("Enabling audio interrupts\n");
+    LOGVERBOSE("Enabling audio interrupts\n");
     AudioInterrupts();
-    Log.verbose("Playing a sine wave for 2 seconds\n");
+    LOGVERBOSE("Playing a sine wave for 2 seconds\n");
     delay(2000);
-    Log.verbose("Disabling audio interrupts\n");
+    LOGVERBOSE("Disabling audio interrupts\n");
     AudioNoInterrupts();
-    Log.verbose("Attempting to load the test data\n");
-    instrument_data_t* new_instrument = CInstrument::getInstance()->load("instrument.json");
+    LOGVERBOSE("Attempting to load the test data\n");
+    AudioSynthWavetable::instrument_data* new_instrument = CInstrument::getInstance()->load("instrument.json");
     if (nullptr == new_instrument)
-        Log.verbose("Failed to load test data\n");
+    {
+        LOGVERBOSE("Failed to load test data\n");
+    }
     else
     {
-        audioObjects.wavetable.setInstrument((AudioSynthWavetable::instrument_data&)*new_instrument);
+        audioObjects.wavetable.setInstrument(*new_instrument);
     }
     audioObjects.mixer.gain(0, 0.0);
     audioObjects.mixer.gain(1, 1.0);
     audioObjects.mixer1.gain(0, 0.0);
     audioObjects.mixer1.gain(1, 1.0);
     audioObjects.wavetable.amplitude(1.0);
-    Log.verbose("Enabling audio interrupts\n");
+    LOGVERBOSE("Enabling audio interrupts\n");
     AudioInterrupts();
-    Log.verbose("Dumping irish2 metadata for comparison\n");
+    LOGVERBOSE("Dumping irish2 metadata for comparison\n");
     CUtils::dumpSampleMetadata(&irish2_samples[0]);
 }
 
@@ -276,11 +282,57 @@ void loop()
     {
         first_time = false;
         
-        Log.verbose("Playing a note for ten seconds\n");
+/*
+        LOGVERBOSE("Playing a note for ten seconds\n");
         audioObjects.wavetable.playFrequency(440.0);
         delay(10000);
-        Log.verbose("Stopping the note\n");
+        LOGVERBOSE("Stopping the note\n");
         audioObjects.wavetable.stop();
+*/
+
+    // Play the tune
+        typedef const struct note_key
+        {
+            int channel;
+            int note;
+
+            bool operator<(const note_key k1) const
+            {
+                if (k1.note < note && k1.channel < channel)
+                    return true;
+                else
+                    return false;
+            }
+        } note_key_t;
+
+        std::map<note_key_t, melody_t> note_on_map;
+        int notes = sizeof(pugwash)/sizeof(melody_t);
+        LOGVERBOSE("Playing Trumpet Hornpipe (Captain Pugwash}\n");
+
+        for (int i = 0; i < notes; i++)
+        {
+            // For pugwash ignore everything except channel 1
+            if (pugwash[i].channel != 1)
+                continue;
+            note_key_t note_key = {pugwash[i].channel, pugwash[i].note};
+            if (pugwash[i].note_on)
+                // Note on
+                note_on_map[note_key] = pugwash[i];
+            else
+            {
+                // Note off
+                auto melody = note_on_map.find(note_key);
+                if (melody != note_on_map.end())
+                {
+                    // Found match
+                    //LOGVERBOSE("%s %s %d About to play note %d at index %d\n", __func__, __FILE__, __LINE__, note_key.note, i);
+                    audioObjects.wavetable.playNote(note_key.note);
+                    delay(int(float(pugwash[i].duration) * 1.5));
+                    audioObjects.wavetable.stop();
+                }
+            }
+        }
+        LOGVERBOSE("Finished\n");
     }
     else
         delay(1000);

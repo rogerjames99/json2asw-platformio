@@ -96,8 +96,7 @@ void CInstrument::dumpInstrumentData(instrument_data_t *instrumentData)
                             );
         Log.verbose("%s", buf);
 }
-
-struct instrument_data_t* CInstrument::load(const char *name)
+AudioSynthWavetable::instrument_data* CInstrument::load(const char *name)
 {
     char buf[256];
     size_t capacity = 50000;
@@ -206,5 +205,5 @@ struct instrument_data_t* CInstrument::load(const char *name)
 
     dumpInstrumentData(instrument_data.get());
     
-    return instrument_data.get();   
+    return (AudioSynthWavetable::instrument_data*)instrument_data.get();
 }
