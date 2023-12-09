@@ -418,6 +418,7 @@ static const AudioSynthWavetable::sample_data irish2_samples[4] = {
 	},
 };
 
-static const uint8_t irish2_ranges[] = {127, 127, 127, 127, };
+static const uint8_t irish2_ranges[] = {65, 77, 89, 127, };
 
 const AudioSynthWavetable::instrument_data irish2 = {4, irish2_ranges, irish2_samples };
+
