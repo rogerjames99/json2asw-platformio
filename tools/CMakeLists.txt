@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.0.0)
-project(sf2bin VERSION 0.1.0 LANGUAGES C CXX)
+project(asw2json VERSION 0.1.0 LANGUAGES C CXX)
 
-add_executable(sf2bin main.cpp)
+add_executable(asw2json main.cpp)
 
-target_include_directories(sf2bin PUBLIC "${CMAKE_SOURCE_DIR}/cereal/include")
+target_include_directories(asw2json PUBLIC "${CMAKE_SOURCE_DIR}/cereal/include")
