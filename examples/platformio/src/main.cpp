@@ -11,8 +11,8 @@
 #include "mylog.h"
 
 // Include irish2 samples for comparison
-#include "../../irish2_samples.h"
-#include "../../irish2_samples.cpp"
+#include "../../../tools/irish2_samples.h"
+#include "../../../tools/irish2_samples.cpp"
 
 // ctroger: begin automatically generated code
 // the following JSON string contains the whole project, 
