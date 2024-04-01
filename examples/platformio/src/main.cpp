@@ -10,10 +10,6 @@
 #include "pugwash.h"
 #include "mylog.h"
 
-// Include irish2 samples for comparison
-#include "../../../tools/irish2_samples.h"
-#include "../../../tools/irish2_samples.cpp"
-
 // ctroger: begin automatically generated code
 // the following JSON string contains the whole project, 
 // it's included in all generated files.
@@ -271,8 +267,6 @@ void setup()
     audioObjects.wavetable.amplitude(1.0);
     LOGVERBOSE("Enabling audio interrupts\n");
     AudioInterrupts();
-    LOGVERBOSE("Dumping irish2 metadata for comparison\n");
-    CUtils::dumpSampleMetadata(&irish2_samples[0]);
 }
 
 void loop()
